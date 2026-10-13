@@ -396,6 +396,37 @@ input[type="range"]::-moz-range-thumb {
   height: 1px;
   background: var(--border);
 }
+.section-divider-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  width: 100%;
+}
+.section-divider-toggle:hover .section-toggle-label { color: var(--accent); }
+.section-toggle-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--fg-muted);
+  transition: color 0.15s;
+  white-space: nowrap;
+}
+.section-toggle-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-muted);
+  transition: transform 0.2s, color 0.15s;
+  margin-left: 0.1rem;
+}
+.section-toggle-chevron.open { transform: rotate(90deg); }
+.section-divider-toggle:hover .section-toggle-chevron { color: var(--accent); }
+.cfr-collapsible { overflow: hidden; transition: max-height 0.3s ease; }
 .section-divider span {
   font-size: 0.72rem;
   font-weight: 600;
@@ -546,9 +577,9 @@ input[type="range"]::-moz-range-thumb {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  border: 1.5px solid var(--fg-muted);
-  background: none;
-  color: var(--fg-muted);
+  border: none;
+  background: var(--secondary);
+  color: #ffffff;
   font-size: 0.68rem;
   font-weight: 700;
   font-family: var(--font-body);
@@ -559,8 +590,9 @@ input[type="range"]::-moz-range-thumb {
   padding: 0;
   line-height: 1;
   flex-shrink: 0;
+  transition: background 0.15s;
 }
-.tooltip-btn:hover { border-color: var(--accent); color: var(--accent); }
+.tooltip-btn:hover, .tooltip-wrap.open .tooltip-btn { background: var(--accent); color: #ffffff; }
 .tooltip-bubble {
   display: none;
   position: absolute;
@@ -728,8 +760,8 @@ footer a:hover { text-decoration: underline; }
           <div class="runit">kWh / 100 km</div>
         </div>
         <div class="result-box green-bg">
+          <div class="rlabel">Consommation annuelle</div>
           <p class="rval" id="annual-val">—</p>
-          <div class="rlabel" style="margin-top:0.3rem">Consommation annuelle</div>
           <div class="runit">kWh / an</div>
         </div>
       </div>
@@ -738,7 +770,7 @@ footer a:hover { text-decoration: underline; }
       <div id="elec-cost-row" class="elec-cost-row" hidden>
         <div class="elec-cost-icon">💲</div>
         <div class="elec-cost-body">
-          <span class="elec-cost-label">Coût annuel d'électricité</span>
+          <span class="elec-cost-label">Coût annuel en électricité</span>
           <span class="elec-cost-val" id="elec-cost-val">—</span>
           <span class="tooltip-wrap" id="cost-tooltip">
             <button class="tooltip-btn" aria-label="Explication du calcul du coût">?</button>
@@ -762,7 +794,22 @@ footer a:hover { text-decoration: underline; }
       <div class="card-icon eco">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><path d="M9 9h.01M15 9h.01"/></svg>
       </div>
-      <div class="card-title">Émissions CO₂ évitées</div>
+      <div class="card-title">Émissions CO₂
+        <span class="tooltip-wrap" id="co2-tooltip" style="vertical-align:middle;margin-left:0.4rem">
+          <button class="tooltip-btn" aria-label="Explication du calcul CO₂">?</button>
+          <div class="tooltip-bubble">
+            <strong>Comment ce calcul fonctionne</strong><br><br>
+            <strong>Véhicule essence :</strong><br>
+            CO₂ = km/an × (L/100 km ÷ 100) × 2,3 kg CO₂/L<br>
+            (facteur ECCC pour l'essence ordinaire)<br><br>
+            <strong>Véhicule électrique :</strong><br>
+            CO₂ = kWh/an × intensité carbonique du réseau (gCO₂e/kWh)<br>
+            L'intensité varie selon la province — le Québec (5 gCO₂e/kWh) produit une électricité parmi les plus propres au monde grâce à l'hydroélectricité.<br><br>
+            <strong>CO₂ évité</strong> = CO₂ essence − CO₂ VÉ<br><br>
+            Sources : <a href="https://www.canada.ca/fr/environnement-changement-climatique/services/changements-climatiques/emissions-gaz-effet-serre/sources-puits-rapport-annuel.html" target="_blank" rel="noopener">ECCC</a> · <a href="https://www.rncan.gc.ca/efficacite-energetique/produits-consommation-energie/vehicules/16836" target="_blank" rel="noopener">Ressources naturelles Canada</a>
+          </div>
+        </span>
+      </div>
     </div>
 
     <!-- Véhicule à essence de référence -->
@@ -781,7 +828,7 @@ footer a:hover { text-decoration: underline; }
     <!-- Comparaison CO2 -->
     <div class="co2-comparison">
       <div class="co2-box gas">
-        <div class="co2-label">Véhicule essence</div>
+        <div class="co2-label">Véhicule à essence équivalent</div>
         <p class="co2-val" id="co2-gas-val">—</p>
         <div class="co2-unit">tCO₂e / an</div>
       </div>
@@ -825,33 +872,42 @@ footer a:hover { text-decoration: underline; }
       </span>
     </div>
 
-    <div class="section-divider" style="margin-top:1.25rem"><span>Crédits carbone (CFR)</span></div>
-
-    <!-- Période de conformité -->
-    <div style="margin:0.75rem 0">
-      <label for="compliance-year">Période de conformité</label>
-      <select id="compliance-year"></select>
-    </div>
-
-    <!-- Résultat crédits -->
-    <div class="result-box blue-bg" style="margin-top:0.5rem">
-      <div class="rlabel">Unités de conformité
-        <span class="tooltip-wrap" id="cfr-tooltip">
-          <button class="tooltip-btn" aria-label="Source réglementaire">?</button>
-          <div class="tooltip-bubble">
-            <strong>Règlement sur les combustibles propres</strong> (DORS/2022-140), art. 102<br><br>
-            Formule pour les véhicules à moteur électrique : unités = IC<sub>diff</sub> × (Q × D) × 10⁻⁶<br><br>
-            <a href="https://laws-lois.justice.gc.ca/fra/reglements/DORS-2022-140/" target="_blank" rel="noopener">Texte du règlement — Justice Canada</a>
-          </div>
+    <div class="section-divider" style="margin-top:1.25rem">
+      <button class="section-divider-toggle" id="cfr-toggle" aria-expanded="false" aria-controls="cfr-collapsible">
+        <span class="section-toggle-label">Crédits carbone</span>
+        <span class="section-toggle-chevron" id="cfr-chevron">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
         </span>
-      </div>
-      <p class="rval" id="credits-val">—</p>
-      <div class="runit">par année</div>
+      </button>
     </div>
 
-    <div class="credit-detail" id="credit-detail"></div>
+    <div class="cfr-collapsible" id="cfr-collapsible" style="max-height:0;visibility:hidden">
+      <!-- Période de conformité -->
+      <div style="margin:0.75rem 0">
+        <label for="compliance-year">Période de conformité</label>
+        <select id="compliance-year"></select>
+      </div>
 
-    <div class="info-row" id="co2-info-row" style="margin-top:0.75rem"></div>
+      <!-- Résultat crédits -->
+      <div class="result-box blue-bg" style="margin-top:0.5rem">
+        <div class="rlabel">Unités de conformité
+          <span class="tooltip-wrap" id="cfr-tooltip">
+            <button class="tooltip-btn" aria-label="Source réglementaire">?</button>
+            <div class="tooltip-bubble">
+              <strong>Règlement sur les combustibles propres</strong> (DORS/2022-140), art. 102<br><br>
+              Formule pour les véhicules à moteur électrique : unités = IC<sub>diff</sub> × (Q × D) × 10⁻⁶<br><br>
+              <a href="https://laws-lois.justice.gc.ca/fra/reglements/DORS-2022-140/" target="_blank" rel="noopener">Texte du règlement — Justice Canada</a>
+            </div>
+          </span>
+        </div>
+        <p class="rval" id="credits-val">—</p>
+        <div class="runit">par année</div>
+      </div>
+
+      <div class="credit-detail" id="credit-detail"></div>
+
+      <div class="info-row" id="co2-info-row" style="margin-top:0.75rem"></div>
+    </div>
   </div>
 
   <footer>
@@ -1114,6 +1170,10 @@ function updateResults(){
   `;
 
   co2Card.hidden=false;
+  // Recalcule la hauteur de l'accordéon si ouvert (contenu dynamique)
+  if (cfrOpen && cfrCollapsible) {
+    cfrCollapsible.style.maxHeight = cfrCollapsible.scrollHeight + 'px';
+  }
 }
 
 // ---- Tooltip toggle ----
@@ -1126,6 +1186,27 @@ document.querySelectorAll('.tooltip-wrap').forEach(wrap => {
 });
 document.addEventListener('click', () => {
   document.querySelectorAll('.tooltip-wrap.open').forEach(w => w.classList.remove('open'));
+});
+
+// ---- Accordéon Crédits carbone ----
+const cfrToggle = $('cfr-toggle');
+const cfrCollapsible = $('cfr-collapsible');
+const cfrChevron = $('cfr-chevron');
+let cfrOpen = false;
+
+cfrToggle.addEventListener('click', (e) => {
+  e.stopPropagation();
+  cfrOpen = !cfrOpen;
+  cfrToggle.setAttribute('aria-expanded', cfrOpen);
+  if (cfrOpen) {
+    cfrCollapsible.style.visibility = 'visible';
+    cfrCollapsible.style.maxHeight = cfrCollapsible.scrollHeight + 'px';
+    cfrChevron.classList.add('open');
+  } else {
+    cfrCollapsible.style.maxHeight = '0';
+    cfrChevron.classList.remove('open');
+    setTimeout(() => { if (!cfrOpen) cfrCollapsible.style.visibility = 'hidden'; }, 300);
+  }
 });
 </script>
 </body></html>
