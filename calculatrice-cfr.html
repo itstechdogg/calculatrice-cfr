@@ -354,32 +354,82 @@ input[type="range"]::-moz-range-thumb {
 .elec-cost-row {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  text-align: center;
+  gap: 0.6rem;
   margin-top: 1rem;
   padding: 0.85rem 1rem;
   background: var(--accent-light);
   border-radius: 8px;
   border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
 }
-.elec-cost-icon { font-size: 1.3rem; flex-shrink: 0; }
+.elec-cost-icon { font-size: 1.5rem; line-height: 1; flex-shrink: 0; }
 .elec-cost-body {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: 0.35rem 0.6rem;
-  flex: 1;
   min-width: 0;
 }
 .elec-cost-label {
   font-size: 0.82rem;
-  font-weight: 500;
   color: var(--fg);
 }
 .elec-cost-val {
   font-family: var(--font-mono);
-  font-size: 1.1rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Home-charging share field */
+.home-charge-field {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+.home-charge-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+.home-charge-header label {
+  display: inline;
+  margin-bottom: 0;
+}
+.home-charge-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.25rem;
+  margin-top: 0.9rem;
+  padding: 1.25rem 1rem;
+  background: var(--accent-light);
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.home-charge-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+.home-charge-val {
+  font-family: var(--font-mono);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1.1;
+}
+.home-charge-unit {
+  font-size: 0.8rem;
+  color: var(--fg-muted);
 }
 
 /* CO2 / Credits section */
@@ -578,8 +628,8 @@ input[type="range"]::-moz-range-thumb {
   height: 18px;
   border-radius: 50%;
   border: none;
-  background: var(--secondary);
-  color: #ffffff;
+  background: var(--accent);
+  color: #1f1f1f;
   font-size: 0.68rem;
   font-weight: 700;
   font-family: var(--font-body);
@@ -592,7 +642,7 @@ input[type="range"]::-moz-range-thumb {
   flex-shrink: 0;
   transition: background 0.15s;
 }
-.tooltip-btn:hover, .tooltip-wrap.open .tooltip-btn { background: var(--accent); color: #ffffff; }
+.tooltip-btn:hover, .tooltip-wrap.open .tooltip-btn { background: var(--accent-hover); color: #1f1f1f; }
 .tooltip-bubble {
   display: none;
   position: absolute;
@@ -767,6 +817,31 @@ footer a:hover { text-decoration: underline; }
       </div>
       <div class="formula" id="formula-text"></div>
       <div class="info-row" id="info-row"></div>
+      <div class="home-charge-field">
+        <div class="home-charge-header">
+          <label for="home-pct-slider">Part de recharge à domicile</label>
+          <span class="tooltip-wrap" id="home-pct-tooltip">
+            <button class="tooltip-btn" aria-label="Explication de la part de recharge à domicile">?</button>
+            <div class="tooltip-bubble">
+              Pourcentage de votre recharge annuelle effectuée à la maison, sur votre borne.<br><br>
+              Les programmes de récompenses ne comptabilisent que les kWh rechargés <strong>à domicile</strong>, sur une borne inscrite au programme (généralement compatible avec le protocole <strong>OCPP</strong>). La recharge sur bornes publiques n'est donc pas prise en compte.
+            </div>
+          </span>
+        </div>
+        <div class="slider-wrapper">
+          <div class="slider-display">
+            <span class="num" id="home-pct-num">80</span>
+            <span class="unit">%</span>
+          </div>
+          <input type="range" id="home-pct-slider" min="0" max="100" step="5" value="80">
+          <div class="slider-bounds"><span>0 %</span><span>100 %</span></div>
+        </div>
+        <div class="home-charge-result">
+          <span class="home-charge-label">Recharge annuelle à domicile</span>
+          <span class="home-charge-val" id="home-kwh-val">—</span>
+          <span class="home-charge-unit">kWh / an</span>
+        </div>
+      </div>
       <div id="elec-cost-row" class="elec-cost-row" hidden>
         <div class="elec-cost-icon">💲</div>
         <div class="elec-cost-body">
@@ -776,7 +851,8 @@ footer a:hover { text-decoration: underline; }
             <button class="tooltip-btn" aria-label="Explication du calcul du coût">?</button>
             <div class="tooltip-bubble">
               <strong>Tarif D Résidentiel d'Hydro-Québec</strong> (en vigueur le 1<sup>er</sup> avril 2026)<br><br>
-              Le coût est calculé au tarif de la <strong>2<sup>e</sup> tranche</strong> (11,142 ¢/kWh), qui s'applique au-delà des 40 premiers kWh par jour. La recharge d'un VÉ s'ajoute typiquement à la consommation de base du foyer, donc se situe dans cette tranche.<br><br>
+              Le coût ne porte que sur la <strong>recharge effectuée à domicile</strong> (selon la part choisie ci-dessus) ; la recharge sur bornes publiques est facturée séparément.<br><br>
+              Il est calculé au tarif de la <strong>2<sup>e</sup> tranche</strong> (11,142 ¢/kWh), qui s'applique au-delà des 40 premiers kWh par jour. La recharge d'un VÉ s'ajoute typiquement à la consommation de base du foyer, donc se situe dans cette tranche.<br><br>
               <strong>Calcul :</strong><br>
               <span id="cost-formula-detail"></span><br><br>
               Taxes : TPS (5 %) + TVQ (9,975 %) = 14,975 %<br><br>
@@ -974,6 +1050,7 @@ const TAXES = 1 + TPS + TVQ; // 1.14975
 const $=id=>document.getElementById(id);
 const yearSel=$('year'), makeSel=$('make'), modelSel=$('model');
 const kmSlider=$('km-slider'), kmNum=$('km-num');
+const homePctSlider=$('home-pct-slider'), homePctNum=$('home-pct-num'), homeKwhVal=$('home-kwh-val');
 const consoVal=$('conso-val'), annualVal=$('annual-val');
 const formulaText=$('formula-text'), placeholder=$('results-placeholder');
 const resultsContent=$('results-content'), vehicleDetail=$('vehicle-detail');
@@ -997,11 +1074,15 @@ function fillSelect(sel, items, ph, countEl) {
   }
 }
 
-function updateSliderFill(){
-  const pct=(kmSlider.value-kmSlider.min)/(kmSlider.max-kmSlider.min)*100;
+function fillSlider(slider){
+  const pct=(slider.value-slider.min)/(slider.max-slider.min)*100;
   const a=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
   const t=getComputedStyle(document.documentElement).getPropertyValue('--slider-track').trim();
-  kmSlider.style.background=`linear-gradient(to right,${a} 0%,${a} ${pct}%,${t} ${pct}%,${t} 100%)`;
+  slider.style.background=`linear-gradient(to right,${a} 0%,${a} ${pct}%,${t} ${pct}%,${t} 100%)`;
+}
+function updateSliderFill(){
+  fillSlider(kmSlider);
+  fillSlider(homePctSlider);
 }
 
 // ---- Init years ----
@@ -1041,7 +1122,12 @@ complianceYearSel.addEventListener('change',updateResults);
 // ---- Slider ----
 kmSlider.addEventListener('input',()=>{
   kmNum.textContent=fmt(+kmSlider.value);
-  updateSliderFill();
+  fillSlider(kmSlider);
+  updateResults();
+});
+homePctSlider.addEventListener('input',()=>{
+  homePctNum.textContent=homePctSlider.value;
+  fillSlider(homePctSlider);
   updateResults();
 });
 updateSliderFill();
@@ -1097,13 +1183,21 @@ function updateResults(){
   placeholder.hidden=true;
   resultsContent.hidden=false;
 
-  // ---- Coût électricité (QC seulement) ----
-  if(prov === 'QC' && annual > 0) {
-    const costHT = annual * TARIF_D_T2;
+  // ---- Recharge à domicile ----
+  const homePct=+homePctSlider.value;
+  const homeKwh=annual*homePct/100;
+  homeKwhVal.textContent=fmt(Math.round(homeKwh));
+  // Exposé pour la future page de recommandation de programmes
+  window.evCalc={annual, homePct, homeKwh, province: provinceSel.value,
+                 vehicle: {y:v.y, mk:v.mk, md:v.md, cat:v.cat}};
+
+  // ---- Coût électricité (QC seulement) — basé sur la recharge à domicile ----
+  if(prov === 'QC' && homeKwh > 0) {
+    const costHT = homeKwh * TARIF_D_T2;
     const costTTC = costHT * TAXES;
     elecCostVal.textContent = fmt(Math.round(costTTC)) + ' $';
     costFormulaDetail.innerHTML =
-      `${fmt(Math.round(annual))} kWh × 11,142 ¢/kWh = ${costHT.toFixed(2).replace('.',',')} $<br>` +
+      `${fmt(Math.round(homeKwh))} kWh (à domicile) × 11,142 ¢/kWh = ${costHT.toFixed(2).replace('.',',')} $<br>` +
       `${costHT.toFixed(2).replace('.',',')} $ × 1,14975 (taxes) = <strong>${costTTC.toFixed(2).replace('.',',')} $</strong>`;
     elecCostRow.hidden = false;
   } else {
